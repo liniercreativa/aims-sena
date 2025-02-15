@@ -22,6 +22,8 @@ class Aset extends Model
         'jenis_peralatan',
         'tag_number',
         'serial_number',
+        'kodeaset',
+
     ];
 
     public function area()
@@ -32,5 +34,10 @@ class Aset extends Model
     public function cluster()
     {
         return $this->belongsTo(Cluster::class);
+    }
+
+    public function inspeksi()
+    {
+        return $this->hasMany(Inspeksi::class);
     }
 }

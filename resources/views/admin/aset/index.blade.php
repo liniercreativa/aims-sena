@@ -135,6 +135,48 @@
         </div>
     </div>
 
+
+
+
+
+    <!-- Modal Jadwal Inspeksi -->
+    <div class="modal fade" id="jadwalModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Jadwal Inspeksi</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="jadwalForm">
+                        <input type="hidden" id="aset_id" name="aset_id">
+                        <div class="mb-3">
+                            <label class="form-label">Tanggal Inspeksi</label>
+                            <input type="date" id="tanggal_jadwal" name="tanggal_jadwal" class="form-control"
+                                required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Petugas</label>
+                            <select id="user_id" name="user_id" class="form-control" required>
+                                <option value="">Pilih Petugas</option>
+                                @foreach ($users as $user)
+                                    <option value="{{ $user->id }}">{{ $user->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">Tutup</button>
+                    <button type="button" class="btn btn-primary" onclick="saveJadwal()">Simpan</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+
     {{-- Ajax / Jquery --}}
     <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.4.1/css/responsive.bootstrap5.min.css">
@@ -294,6 +336,82 @@
                 timer: 1500
             });
         @endif
+
+
+
+
+
+
+        // Tampilkan modal jadwal inspeksi
+        function showJadwalModal(id) {
+            // Reset form
+            $('#jadwalForm')[0].reset();
+            $('#aset_id').val(id);
+
+            // Cek status jadwal terlebih dahulu
+            $.ajax({
+                url: `/dashboard/aset/check-jadwal/${id}`, // URL yang benar
+                type: 'GET',
+                success: function(response) {
+                    if (response.isScheduled) {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Perhatian!',
+                            text: 'Aset sudah terjadwal',
+                            showConfirmButton: true
+                        });
+                    } else {
+                        $('#jadwalModal').modal('show');
+                    }
+                }
+            });
+        }
+
+        function saveJadwal() {
+            const asetId = $('#aset_id').val();
+            const formData = {
+                tanggal_jadwal: $('#tanggal_jadwal').val(),
+                user_id: $('#user_id').val(),
+                _token: '{{ csrf_token() }}'
+            };
+
+            $.ajax({
+                url: `/dashboard/aset/create-jadwal/${asetId}`, // URL yang benar
+                type: 'POST',
+                data: formData,
+                success: function(response) {
+                    if (response.success) {
+                        $('#jadwalModal').modal('hide');
+                        // Refresh DataTable
+                        $('#asetTable').DataTable().ajax.reload();
+                        // Tampilkan pesan sukses
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Berhasil!',
+                            text: response.message,
+                            showConfirmButton: false,
+                            timer: 1500
+                        });
+                    }
+                },
+                error: function(xhr) {
+                    if (xhr.status === 422) {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Perhatian!',
+                            text: xhr.responseJSON.message,
+                            showConfirmButton: true
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Oops...',
+                            text: 'Terjadi kesalahan!',
+                        });
+                    }
+                }
+            });
+        }
     </script>
 
 

@@ -7,7 +7,9 @@ use Illuminate\Http\Request;
 use App\Models\Area;
 use App\Models\Cluster;
 use App\Models\Aset;
+use App\Models\User;
 use Yajra\DataTables\Facades\DataTables;
+use App\Models\Inspeksi;
 
 
 class AsetController extends Controller
@@ -40,6 +42,9 @@ class AsetController extends Controller
             ->addColumn('action', function ($aset) {
                 return '
                 <div class="d-inline-block">
+                    <button onclick="showJadwalModal(' . $aset->id . ')" class="btn btn-sm btn-icon btn-primary">
+                        <i class="ti ti-calendar"></i>
+                    </button>
                     <button onclick="showDetail(' . $aset->id . ')" class="btn btn-sm btn-icon btn-info">
                         <i class="ti ti-eye"></i>
                     </button>
@@ -77,7 +82,8 @@ class AsetController extends Controller
     public function index()
     {
         $title = 'Aset';
-        return view('admin.aset.index', compact('title'));
+        $users = User::where('role', 'inspector')->get();
+        return view('admin.aset.index', compact('title', 'users'));
     }
     function add()
     {
@@ -223,5 +229,51 @@ class AsetController extends Controller
             return redirect()->route('aset.index')
                 ->with('error', 'Gagal menghapus area');
         }
+    }
+
+
+
+    //inspeksi Tambah Jadwal
+    public function createJadwal(Request $request, Aset $aset)
+    {
+        // Cek apakah aset sudah terjadwal
+        $existingJadwal = Inspeksi::where('aset_id', $aset->id)
+            ->where('status', 'terjadwal')
+            ->first();
+
+        if ($existingJadwal) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Aset sudah terjadwal'
+            ], 422);
+        }
+
+        $validated = $request->validate([
+            'tanggal_jadwal' => 'required|date',
+            'user_id' => 'required|exists:users,id'
+        ]);
+
+        // Buat jadwal baru
+        Inspeksi::create([
+            'aset_id' => $aset->id,
+            'user_id' => $validated['user_id'],
+            'tanggal_jadwal_inspeksi' => $validated['tanggal_jadwal'],
+            'status' => 'terjadwal'
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Jadwal inspeksi berhasil dibuat'
+        ]);
+    }
+    public function checkJadwal(Aset $aset)
+    {
+        $isScheduled = Inspeksi::where('aset_id', $aset->id)
+            ->where('status', 'terjadwal')
+            ->exists();
+
+        return response()->json([
+            'isScheduled' => $isScheduled
+        ]);
     }
 }

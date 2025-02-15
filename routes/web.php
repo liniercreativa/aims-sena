@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\Aset\AsetController;
 use App\Http\Controllers\Admin\LoginController;
 use App\Http\Controllers\Admin\Aset\ClusterController;
 use App\Http\Controllers\Admin\User\UserController;
+use App\Http\Controllers\Admin\Inspeksi\InspeksiController;
 
 
 Route::get('/', function () {
@@ -65,4 +66,20 @@ Route::middleware(['auth', 'role:admin'])->prefix('dashboard')->group(function (
     //Ajax
     Route::get('aset/get-all', [AsetController::class, 'getAll'])->name('aset.getAll');
     Route::get('/aset/{aset}', [AsetController::class, 'show'])->name('aset.show');
+    Route::get('/aset/check-jadwal/{aset}', [AsetController::class, 'checkJadwal'])->name('aset.checkJadwal');
+    Route::post('/aset/create-jadwal/{aset}', [AsetController::class, 'createJadwal'])->name('aset.createJadwal');
+
+    //Inspeksi
+    Route::get('/inspeksi', [InspeksiController::class, 'index'])->name('inspeksi.index');
+    Route::get('/inspeksi/getAll', [InspeksiController::class, 'getAll'])->name('inspeksi.getAll');
+    Route::get('/inspeksi/detail/{id}', [InspeksiController::class, 'detail'])->name('inspeksi.detail');
+    Route::get('/inspeksi/form/{id}', [InspeksiController::class, 'form'])->name('inspeksi.form');
+    Route::post('/inspeksi/form', [AsetController::class, 'createJadwal'])->name('inspeksi.create');
+    Route::put('/inspeksi/{inspeksi}', [InspeksiController::class, 'update'])->name('inspeksi.update');
+
+    Route::get('/inspeksi/fotoinspeksi/{id}', [InspeksiController::class, 'fotoinspeksi'])->name('inspeksi.fotoinspeksi');
+    Route::get('/inspeksi/perbaikan/{id}', [InspeksiController::class, 'perbaikan'])->name('inspeksi.perbaikan');
+    Route::post('/inspeksi/perbaikan', [InspeksiController::class, 'storePerbaikan'])->name('perbaikan.store');
+    Route::post('/maintenance/{maintenance}/selesai', [InspeksiController::class, 'selesai'])
+        ->name('maintenance.selesai');
 });
